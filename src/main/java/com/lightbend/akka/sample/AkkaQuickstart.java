@@ -9,9 +9,8 @@ public class AkkaQuickstart {
     public static void main(String[] args) {
         ActorSystem system = ActorSystem.create("testSystem");
 
-        ActorRef firstRef = system.actorOf(PrintMyActorRefActor.props(), "first-actor");
-        System.out.println("1-" + firstRef);
-        firstRef.tell("printit", ActorRef.noSender());
+        ActorRef first = system.actorOf(StartStopActor1.props(), "first");
+        first.tell("stop", ActorRef.noSender());
 
         System.out.println(">>> Press ENTER to exit <<<");
         try {
