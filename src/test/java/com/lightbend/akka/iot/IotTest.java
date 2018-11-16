@@ -10,6 +10,7 @@ import org.junit.jupiter.api.*;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class IotTest {
     private static final Logger LOG = Logger.getLogger(IotTest.class.getName());
@@ -28,14 +29,12 @@ public class IotTest {
 
     @BeforeEach
     void beforeEachTest(TestInfo testInfo) {
-        LOG.info(() -> String.format("About to execute [%s]",
-                testInfo.getDisplayName()));
+        LOG.info(() -> String.format("About to execute [%s]", testInfo.getDisplayName()));
     }
 
     @AfterEach
     void afterEachTest(TestInfo testInfo) {
-        LOG.info(() -> String.format("Finished executing [%s]",
-                testInfo.getDisplayName()));
+        LOG.info(() -> String.format("Finished executing [%s]", testInfo.getDisplayName()));
     }
 
     @Test
@@ -90,5 +89,50 @@ public class IotTest {
 
         deviceActor.tell(new DeviceManager.RequestTrackDevice("group", "wrongDevice"), probe.getRef());
         probe.expectNoMessage();
+    }
+
+    @Test
+    void testRegisterDeviceActor() {
+        TestKit probe = new TestKit(system);
+        ActorRef groupActor = system.actorOf(DeviceGroup.props("group"));
+
+        groupActor.tell(new DeviceManager.RequestTrackDevice("group", "device1"), probe.getRef());
+        probe.expectMsgClass(DeviceManager.DeviceRegistered.class);
+        ActorRef deviceActor1 = probe.getLastSender();
+
+        groupActor.tell(new DeviceManager.RequestTrackDevice("group", "device2"), probe.getRef());
+        probe.expectMsgClass(DeviceManager.DeviceRegistered.class);
+        ActorRef deviceActor2 = probe.getLastSender();
+        assertNotEquals(deviceActor1, deviceActor2);
+
+        // Check that the device actors are working
+        deviceActor1.tell(new Device.RecordTemperature(0L, 1.0), probe.getRef());
+        assertEquals(0L, probe.expectMsgClass(Device.TemperatureRecorded.class).requestId);
+        deviceActor2.tell(new Device.RecordTemperature(1L, 2.0), probe.getRef());
+        assertEquals(1L, probe.expectMsgClass(Device.TemperatureRecorded.class).requestId);
+    }
+
+    @Test
+    void testIgnoreRequestsForWrongGroupId() {
+        TestKit probe = new TestKit(system);
+        ActorRef groupActor = system.actorOf(DeviceGroup.props("group"));
+
+        groupActor.tell(new DeviceManager.RequestTrackDevice("wrongGroup", "device1"), probe.getRef());
+        probe.expectNoMessage();
+    }
+
+    @Test
+    void testReturnSameActorForSameDeviceId() {
+        TestKit probe = new TestKit(system);
+        ActorRef groupActor = system.actorOf(DeviceGroup.props("group"));
+
+        groupActor.tell(new DeviceManager.RequestTrackDevice("group", "device1"), probe.getRef());
+        probe.expectMsgClass(DeviceManager.DeviceRegistered.class);
+        ActorRef deviceActor1 = probe.getLastSender();
+
+        groupActor.tell(new DeviceManager.RequestTrackDevice("group", "device1"), probe.getRef());
+        probe.expectMsgClass(DeviceManager.DeviceRegistered.class);
+        ActorRef deviceActor2 = probe.getLastSender();
+        assertEquals(deviceActor1, deviceActor2);
     }
 }

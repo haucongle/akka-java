@@ -30,14 +30,12 @@ class AkkaQuickstartTest {
 
     @BeforeEach
     void beforeEachTest(TestInfo testInfo) {
-        LOG.info(() -> String.format("About to execute [%s]",
-                testInfo.getDisplayName()));
+        LOG.info(() -> String.format("About to execute [%s]", testInfo.getDisplayName()));
     }
 
     @AfterEach
     void afterEachTest(TestInfo testInfo) {
-        LOG.info(() -> String.format("Finished executing [%s]",
-                testInfo.getDisplayName()));
+        LOG.info(() -> String.format("Finished executing [%s]", testInfo.getDisplayName()));
     }
 
     @Test
