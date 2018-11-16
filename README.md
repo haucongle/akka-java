@@ -5,6 +5,6 @@ Update dependencies to latest version
 
 Change class to run: `mainClassName` in [build.gradle](/build.gradle)
 
-Run `gradle run`
+Run `./gradlew run`
 
-Test `gradle clean test`
+Test `./gradlew clean test`
