@@ -18,15 +18,13 @@ public class DeviceGroup extends AbstractActor {
     }
 
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-
     private final String groupId;
+    private final Map<String, ActorRef> deviceIdToActor = new HashMap<>();
+    private final Map<ActorRef, String> actorToDeviceId = new HashMap<>();
 
     private DeviceGroup(String groupId) {
         this.groupId = groupId;
     }
-
-    private final Map<String, ActorRef> deviceIdToActor = new HashMap<>();
-    private final Map<ActorRef, String> actorToDeviceId = new HashMap<>();
 
     @Override
     public void preStart() {
