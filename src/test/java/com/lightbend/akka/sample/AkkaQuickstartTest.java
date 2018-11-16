@@ -3,26 +3,24 @@ package com.lightbend.akka.sample;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.testkit.javadsl.TestKit;
-
 import com.lightbend.akka.sample.Greeter.Greet;
 import com.lightbend.akka.sample.Greeter.WhoToGreet;
 import com.lightbend.akka.sample.Printer.Greeting;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AkkaQuickstartTest {
     static ActorSystem system;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         system = ActorSystem.create();
     }
 
-    @AfterClass
+    @AfterAll
     public static void teardown() {
         TestKit.shutdownActorSystem(system);
         system = null;

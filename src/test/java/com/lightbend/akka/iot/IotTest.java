@@ -3,30 +3,40 @@ package com.lightbend.akka.iot;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.testkit.javadsl.TestKit;
-
 import com.lightbend.akka.iot.Device.ReadTemperature;
 import com.lightbend.akka.iot.Device.RespondTemperature;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 
 import java.util.Optional;
+import java.util.logging.Logger;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class IotTest {
+    static final Logger LOG = Logger.getLogger(IotTest.class.getName());
     static ActorSystem system;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         system = ActorSystem.create();
     }
 
-    @AfterClass
+    @AfterAll
     public static void teardown() {
         TestKit.shutdownActorSystem(system);
         system = null;
+    }
+
+    @BeforeEach
+    public void beforeEachTest(TestInfo testInfo) {
+        LOG.info(() -> String.format("About to execute [%s]",
+                testInfo.getDisplayName()));
+    }
+
+    @AfterEach
+    public void afterEachTest(TestInfo testInfo) {
+        LOG.info(() -> String.format("Finished executing [%s]",
+                testInfo.getDisplayName()));
     }
 
     @Test

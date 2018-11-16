@@ -1,6 +1,6 @@
 plugins {
-  id 'se.patrikerdes.use-latest-versions' version '0.2.6'
-  id 'com.github.ben-manes.versions' version '0.20.0'
+    id 'se.patrikerdes.use-latest-versions' version '0.2.6'
+    id 'com.github.ben-manes.versions' version '0.20.0'
 }
 
 apply plugin: 'java'
@@ -8,39 +8,52 @@ apply plugin: 'idea'
 apply plugin: 'application'
 
 repositories {
-  mavenCentral()
-  mavenLocal()
+    mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
-  implementation 'com.typesafe.akka:akka-actor_2.12:2.5.18'
-    
-  testImplementation 'com.typesafe.akka:akka-testkit_2.12:2.5.18'
-  testImplementation 'junit:junit:4.12'
+    implementation 'com.typesafe.akka:akka-actor_2.12:2.5.18'
+
+    testImplementation 'com.typesafe.akka:akka-testkit_2.12:2.5.18'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
 }
 
 mainClassName = "com.lightbend.akka.iot.IotMain"
 // mainClassName = "com.lightbend.akka.sample.AkkaQuickstart"
 
 run {
-  standardInput = System.in
+    standardInput = System.in
 }
 
 test {
-  include 'com/lightbend/akka/iot/**'
+    include 'com/lightbend/akka/iot/**'
 
-  testLogging {
-    events 'PASSED', 'FAILED', 'SKIPPED'
-  }
+    useJUnitPlatform{
+        includeEngines 'junit-jupiter'
+    }
 
-  afterSuite { 
-    desc, result ->
-      if (!desc.parent) {
-        println "\nTest result: ${result.resultType}"
-        println "Test summary: ${result.testCount} tests, " +
-                "${result.successfulTestCount} succeeded, " +
-                "${result.failedTestCount} failed, " +
-                "${result.skippedTestCount} skipped"
-      }
-  }
+    systemProperty 'junit.jupiter.conditions.deactivate', '*'
+    systemProperty 'java.util.logging.manager', 'org.apache.logging.log4j.jul.LogManager'
+    
+    systemProperties = [
+            'junit.jupiter.extensions.autodetection.enabled': 'true',
+            'junit.jupiter.testinstance.lifecycle.default': 'per_class'
+    ]
+    
+    testLogging {
+        events 'PASSED', 'FAILED', 'SKIPPED'
+    }
+
+    afterSuite {
+        desc, result ->
+            if (!desc.parent) {
+                println "\nTest result: ${result.resultType}"
+                println "Test summary: ${result.testCount} tests, " +
+                        "${result.successfulTestCount} succeeded, " +
+                        "${result.failedTestCount} failed, " +
+                        "${result.skippedTestCount} skipped"
+            }
+    }
 }
