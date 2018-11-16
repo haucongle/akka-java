@@ -7,50 +7,49 @@ import com.lightbend.akka.iot.Device.ReadTemperature;
 import com.lightbend.akka.iot.Device.RespondTemperature;
 import org.junit.jupiter.api.*;
 
-import java.util.Optional;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class IotTest {
-    static final Logger LOG = Logger.getLogger(IotTest.class.getName());
-    static ActorSystem system;
+    private static final Logger LOG = Logger.getLogger(IotTest.class.getName());
+    private static ActorSystem system;
 
     @BeforeAll
-    public static void setup() {
+    static void setup() {
         system = ActorSystem.create();
     }
 
     @AfterAll
-    public static void teardown() {
+    static void teardown() {
         TestKit.shutdownActorSystem(system);
         system = null;
     }
 
     @BeforeEach
-    public void beforeEachTest(TestInfo testInfo) {
+    void beforeEachTest(TestInfo testInfo) {
         LOG.info(() -> String.format("About to execute [%s]",
                 testInfo.getDisplayName()));
     }
 
     @AfterEach
-    public void afterEachTest(TestInfo testInfo) {
+    void afterEachTest(TestInfo testInfo) {
         LOG.info(() -> String.format("Finished executing [%s]",
                 testInfo.getDisplayName()));
     }
 
     @Test
-    public void testReplyWithEmptyReadingIfNoTemperatureIsKnown() {
+    void testReplyWithEmptyReadingIfNoTemperatureIsKnown() {
         TestKit probe = new TestKit(system);
         ActorRef deviceActor = system.actorOf(Device.props("group", "device"));
         deviceActor.tell(new ReadTemperature(42L), probe.getRef());
         RespondTemperature response = probe.expectMsgClass(RespondTemperature.class);
         assertEquals(42L, response.requestId);
-        assertEquals(Optional.empty(), response.value);
+        assertEquals(0.0, response.value);
     }
 
     @Test
-    public void testReplyWithLatestTemperatureReading() {
+    void testReplyWithLatestTemperatureReading() {
         TestKit probe = new TestKit(system);
         ActorRef deviceActor = system.actorOf(Device.props("group", "device"));
 
@@ -60,7 +59,7 @@ public class IotTest {
         deviceActor.tell(new Device.ReadTemperature(2L), probe.getRef());
         Device.RespondTemperature response1 = probe.expectMsgClass(Device.RespondTemperature.class);
         assertEquals(2L, response1.requestId);
-        assertEquals(Optional.of(24.0), response1.value);
+        assertEquals(24.0, response1.value);
 
         deviceActor.tell(new Device.RecordTemperature(3L, 55.0), probe.getRef());
         assertEquals(3L, probe.expectMsgClass(Device.TemperatureRecorded.class).requestId);
@@ -68,6 +67,28 @@ public class IotTest {
         deviceActor.tell(new Device.ReadTemperature(4L), probe.getRef());
         Device.RespondTemperature response2 = probe.expectMsgClass(Device.RespondTemperature.class);
         assertEquals(4L, response2.requestId);
-        assertEquals(Optional.of(55.0), response2.value);
+        assertEquals(55.0, response2.value);
+    }
+
+    @Test
+    void testReplyToRegistrationRequests() {
+        TestKit probe = new TestKit(system);
+        ActorRef deviceActor = system.actorOf(Device.props("group", "device"));
+
+        deviceActor.tell(new DeviceManager.RequestTrackDevice("group", "device"), probe.getRef());
+        probe.expectMsgClass(DeviceManager.DeviceRegistered.class);
+        assertEquals(deviceActor, probe.getLastSender());
+    }
+
+    @Test
+    void testIgnoreWrongRegistrationRequests() {
+        TestKit probe = new TestKit(system);
+        ActorRef deviceActor = system.actorOf(Device.props("group", "device"));
+
+        deviceActor.tell(new DeviceManager.RequestTrackDevice("wrongGroup", "device"), probe.getRef());
+        probe.expectNoMessage();
+
+        deviceActor.tell(new DeviceManager.RequestTrackDevice("group", "wrongDevice"), probe.getRef());
+        probe.expectNoMessage();
     }
 }

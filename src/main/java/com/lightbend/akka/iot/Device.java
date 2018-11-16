@@ -4,21 +4,21 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-
-import java.util.Optional;
+import com.lightbend.akka.iot.DeviceManager.DeviceRegistered;
+import com.lightbend.akka.iot.DeviceManager.RequestTrackDevice;
 
 public class Device extends AbstractActor {
-
-    private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
     public static Props props(String groupId, String deviceId) {
         return Props.create(Device.class, () -> new Device(groupId, deviceId));
     }
 
-    public String groupId, deviceId;
-    public Optional<Double> lastTemperatureReading = Optional.empty();
+    private String groupId, deviceId;
+    private double lastTemperatureReading;
 
-    public Device(String groupId, String deviceId) {
+    private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+
+    private Device(String groupId, String deviceId) {
         this.groupId = groupId;
         this.deviceId = deviceId;
     }
@@ -36,9 +36,19 @@ public class Device extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
+                .match(RequestTrackDevice.class, r -> {
+                    if (groupId.equals(r.groupId) && deviceId.equals(r.deviceId)) {
+                        getSender().tell(new DeviceRegistered(), getSelf());
+                    } else {
+                        log.warning(
+                                "Ignoring TrackDevice request for {}-{}.This actor is responsible for {}-{}.",
+                                r.groupId, r.deviceId, groupId, deviceId
+                        );
+                    }
+                })
                 .match(RecordTemperature.class, r -> {
                     log.info("Recorded temperature reading {} with {}", r.value, r.requestId);
-                    lastTemperatureReading = Optional.of(r.value);
+                    lastTemperatureReading = r.value;
                     getSender().tell(new TemperatureRecorded(r.requestId), getSelf());
                 })
                 .match(ReadTemperature.class, r ->
@@ -47,38 +57,38 @@ public class Device extends AbstractActor {
                 .build();
     }
 
-    public static final class ReadTemperature {
-        public long requestId;
+    static final class ReadTemperature {
+        long requestId;
 
-        public ReadTemperature(long requestId) {
+        ReadTemperature(long requestId) {
             this.requestId = requestId;
         }
     }
 
-    public static final class RespondTemperature {
-        public long requestId;
-        public Optional<Double> value;
+    static final class RespondTemperature {
+        long requestId;
+        double value;
 
-        public RespondTemperature(long requestId, Optional<Double> value) {
+        RespondTemperature(long requestId, double value) {
             this.requestId = requestId;
             this.value = value;
         }
     }
 
-    public static final class RecordTemperature {
+    static final class RecordTemperature {
         final long requestId;
         final double value;
 
-        public RecordTemperature(long requestId, double value) {
+        RecordTemperature(long requestId, double value) {
             this.requestId = requestId;
             this.value = value;
         }
     }
 
-    public static final class TemperatureRecorded {
+    static final class TemperatureRecorded {
         final long requestId;
 
-        public TemperatureRecorded(long requestId) {
+        TemperatureRecorded(long requestId) {
             this.requestId = requestId;
         }
     }

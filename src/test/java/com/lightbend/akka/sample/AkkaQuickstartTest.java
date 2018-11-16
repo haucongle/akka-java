@@ -13,35 +13,35 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AkkaQuickstartTest {
-    static final Logger LOG = Logger.getLogger(IotTest.class.getName());
-    static ActorSystem system;
+class AkkaQuickstartTest {
+    private static final Logger LOG = Logger.getLogger(IotTest.class.getName());
+    private static ActorSystem system;
 
     @BeforeAll
-    public static void setup() {
+    static void setup() {
         system = ActorSystem.create();
     }
 
     @AfterAll
-    public static void teardown() {
+    static void teardown() {
         TestKit.shutdownActorSystem(system);
         system = null;
     }
 
     @BeforeEach
-    public void beforeEachTest(TestInfo testInfo) {
+    void beforeEachTest(TestInfo testInfo) {
         LOG.info(() -> String.format("About to execute [%s]",
                 testInfo.getDisplayName()));
     }
 
     @AfterEach
-    public void afterEachTest(TestInfo testInfo) {
+    void afterEachTest(TestInfo testInfo) {
         LOG.info(() -> String.format("Finished executing [%s]",
                 testInfo.getDisplayName()));
     }
 
     @Test
-    public void testGreeterActorSendingOfGreeting() {
+    void testGreeterActorSendingOfGreeting() {
         final TestKit testProbe = new TestKit(system);
         final ActorRef helloGreeter = system.actorOf(Greeter.props("Hello", testProbe.getRef()));
         helloGreeter.tell(new WhoToGreet("Akka"), ActorRef.noSender());
