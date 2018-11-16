@@ -20,6 +20,7 @@ dependencies {
 }
 
 mainClassName = "com.lightbend.akka.iot.IotMain"
+// mainClassName = "com.lightbend.akka.sample.AkkaQuickstart"
 
 run {
   standardInput = System.in
