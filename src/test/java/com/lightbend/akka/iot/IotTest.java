@@ -3,8 +3,10 @@ package com.lightbend.akka.iot;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.testkit.javadsl.TestKit;
+
 import com.lightbend.akka.iot.Device.ReadTemperature;
 import com.lightbend.akka.iot.Device.RespondTemperature;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
