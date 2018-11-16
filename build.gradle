@@ -19,7 +19,7 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
-mainClassName = "com.lightbend.akka.sample.AkkaQuickstart"
+mainClassName = "com.lightbend.akka.iot.IotMain"
 
 run {
   standardInput = System.in
