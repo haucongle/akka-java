@@ -3,12 +3,14 @@ package com.lightbend.akka.iot;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.actor.Terminated;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.lightbend.akka.iot.DeviceManager.RequestTrackDevice;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class DeviceGroup extends AbstractActor {
     public static Props props(String groupId) {
@@ -24,6 +26,7 @@ public class DeviceGroup extends AbstractActor {
     }
 
     private final Map<String, ActorRef> deviceIdToActor = new HashMap<>();
+    private final Map<ActorRef, String> actorToDeviceId = new HashMap<>();
 
     @Override
     public void preStart() {
@@ -43,6 +46,8 @@ public class DeviceGroup extends AbstractActor {
             } else {
                 log.info("Creating device actor for {}", trackMsg.deviceId);
                 deviceActor = getContext().actorOf(Device.props(groupId, trackMsg.deviceId), "device-" + trackMsg.deviceId);
+                getContext().watch(deviceActor);
+                actorToDeviceId.put(deviceActor, trackMsg.deviceId);
                 deviceIdToActor.put(trackMsg.deviceId, deviceActor);
                 deviceActor.forward(trackMsg, getContext());
             }
@@ -54,10 +59,42 @@ public class DeviceGroup extends AbstractActor {
         }
     }
 
+    private void onDeviceList(RequestDeviceList r) {
+        getSender().tell(new ReplyDeviceList(r.requestId, deviceIdToActor.keySet()), getSelf());
+    }
+
+    private void onTerminated(Terminated t) {
+        ActorRef deviceActor = t.getActor();
+        String deviceId = actorToDeviceId.get(deviceActor);
+        log.info("Device actor for {} has been terminated", deviceId);
+        actorToDeviceId.remove(deviceActor);
+        deviceIdToActor.remove(deviceId);
+    }
+
     @Override
     public Receive createReceive() {
         return receiveBuilder()
                 .match(RequestTrackDevice.class, this::onTrackDevice)
+                .match(RequestDeviceList.class, this::onDeviceList)
+                .match(Terminated.class, this::onTerminated)
                 .build();
+    }
+
+    static final class RequestDeviceList {
+        final long requestId;
+
+        RequestDeviceList(long requestId) {
+            this.requestId = requestId;
+        }
+    }
+
+    static final class ReplyDeviceList {
+        final long requestId;
+        final Set<String> ids;
+
+        ReplyDeviceList(long requestId, Set<String> ids) {
+            this.requestId = requestId;
+            this.ids = ids;
+        }
     }
 }
