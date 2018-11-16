@@ -91,6 +91,7 @@ public class IotTest {
         probe.expectNoMessage();
     }
 
+    @Tag("device-group")
     @Test
     void testRegisterDeviceActor() {
         TestKit probe = new TestKit(system);
@@ -112,6 +113,7 @@ public class IotTest {
         assertEquals(1L, probe.expectMsgClass(Device.TemperatureRecorded.class).requestId);
     }
 
+    @Tag("device-group")
     @Test
     void testIgnoreRequestsForWrongGroupId() {
         TestKit probe = new TestKit(system);
@@ -121,6 +123,7 @@ public class IotTest {
         probe.expectNoMessage();
     }
 
+    @Tag("device-group")
     @Test
     void testReturnSameActorForSameDeviceId() {
         TestKit probe = new TestKit(system);

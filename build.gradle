@@ -30,22 +30,16 @@ run {
 test {
     include 'com/lightbend/akka/iot/**'
 
-    useJUnitPlatform{
+    useJUnitPlatform {
+        includeTags 'device-group'
         includeEngines 'junit-jupiter'
     }
 
-    systemProperty 'junit.jupiter.conditions.deactivate', '*'
-    systemProperty 'java.util.logging.manager', 'org.apache.logging.log4j.jul.LogManager'
-    
-    systemProperties = [
-            'junit.jupiter.extensions.autodetection.enabled': 'true',
-            'junit.jupiter.testinstance.lifecycle.default': 'per_class'
-    ]
-    
+//    testLogging.showStandardStreams = true
     testLogging {
         events 'PASSED', 'FAILED', 'SKIPPED'
     }
-
+    
     afterSuite {
         desc, result ->
             if (!desc.parent) {
